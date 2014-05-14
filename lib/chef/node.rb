@@ -34,6 +34,7 @@ require 'chef/node/attribute'
 require 'chef/mash'
 require 'chef/json_compat'
 require 'chef/search/query'
+require 'chef/whitelist'
 
 class Chef
   class Node
@@ -551,23 +552,9 @@ class Chef
       ["automatic", "default", "normal", "override"].each do |level|
         whitelist_config_option = "#{level}_attribute_whitelist".to_sym
         whitelist = Chef::Config[whitelist_config_option]
-        unless whitelist.nil? # nil is default, saves everything
-          data[level] = apply_whitelist_filter(data[level], whitelist)
-        end
+        data[level] = Chef::Whitelist.filter(data[level], whitelist)
       end
       data
-    end
-
-    def apply_whitelist_filter(data, whitelist)
-      return nil if data.nil?
-
-      new_data = data.reject { |k, v| !whitelist.keys.include? k }
-      whitelist.each do |k, v|
-        if v.kind_of? Hash
-          new_data[k] = apply_whitelist_filter(new_data[k], v)
-        end
-      end
-      new_data
     end
 
   end
